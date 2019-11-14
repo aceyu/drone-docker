@@ -1,13 +1,12 @@
 package main
 
 import (
+	"github.com/drone-plugins"
 	"os"
 
 	"github.com/joho/godotenv"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
-
-	"github.com/drone-plugins/drone-docker"
 )
 
 var (
@@ -152,6 +151,11 @@ func main() {
 			Usage:  "build target",
 			EnvVar: "PLUGIN_TARGET",
 		},
+		cli.StringFlag{
+			Name:   "from-registry",
+			Usage:  "build from registry",
+			EnvVar: "PLUGIN_BUILD_FROM_REGISTRY",
+		},
 		cli.StringSliceFlag{
 			Name:   "cache-from",
 			Usage:  "images to consider as cache sources",
@@ -241,22 +245,23 @@ func run(c *cli.Context) error {
 			Email:    c.String("docker.email"),
 		},
 		Build: docker.Build{
-			Remote:      c.String("remote.url"),
-			Name:        c.String("commit.sha"),
-			Dockerfile:  c.String("dockerfile"),
-			Context:     c.String("context"),
-			Tags:        c.StringSlice("tags"),
-			Args:        c.StringSlice("args"),
-			ArgsEnv:     c.StringSlice("args-from-env"),
-			Target:      c.String("target"),
-			Squash:      c.Bool("squash"),
-			Pull:        c.BoolT("pull-image"),
-			CacheFrom:   c.StringSlice("cache-from"),
-			Compress:    c.Bool("compress"),
-			Repo:        c.String("repo"),
-			Labels:      c.StringSlice("custom-labels"),
-			LabelSchema: c.StringSlice("label-schema"),
-			NoCache:     c.Bool("no-cache"),
+			Remote:       c.String("remote.url"),
+			Name:         c.String("commit.sha"),
+			Dockerfile:   c.String("dockerfile"),
+			Context:      c.String("context"),
+			Tags:         c.StringSlice("tags"),
+			Args:         c.StringSlice("args"),
+			ArgsEnv:      c.StringSlice("args-from-env"),
+			Target:       c.String("target"),
+			Squash:       c.Bool("squash"),
+			Pull:         c.BoolT("pull-image"),
+			CacheFrom:    c.StringSlice("cache-from"),
+			Compress:     c.Bool("compress"),
+			Repo:         c.String("repo"),
+			Labels:       c.StringSlice("custom-labels"),
+			LabelSchema:  c.StringSlice("label-schema"),
+			NoCache:      c.Bool("no-cache"),
+			FromRegistry: c.String("from-registry"),
 		},
 		Daemon: docker.Daemon{
 			Registry:      c.String("docker.registry"),

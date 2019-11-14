@@ -37,22 +37,23 @@ type (
 
 	// Build defines Docker build parameters.
 	Build struct {
-		Remote      string   // Git remote URL
-		Name        string   // Docker build using default named tag
-		Dockerfile  string   // Docker build Dockerfile
-		Context     string   // Docker build context
-		Tags        []string // Docker build tags
-		Args        []string // Docker build args
-		ArgsEnv     []string // Docker build args from env
-		Target      string   // Docker build target
-		Squash      bool     // Docker build squash
-		Pull        bool     // Docker build pull
-		CacheFrom   []string // Docker build cache-from
-		Compress    bool     // Docker build compress
-		Repo        string   // Docker build repository
-		LabelSchema []string // label-schema Label map
-		Labels      []string // Label map
-		NoCache     bool     // Docker build no-cache
+		Remote       string   // Git remote URL
+		Name         string   // Docker build using default named tag
+		Dockerfile   string   // Docker build Dockerfile
+		Context      string   // Docker build context
+		Tags         []string // Docker build tags
+		Args         []string // Docker build args
+		ArgsEnv      []string // Docker build args from env
+		Target       string   // Docker build target
+		Squash       bool     // Docker build squash
+		Pull         bool     // Docker build pull
+		CacheFrom    []string // Docker build cache-from
+		Compress     bool     // Docker build compress
+		Repo         string   // Docker build repository
+		LabelSchema  []string // label-schema Label map
+		Labels       []string // Label map
+		NoCache      bool     // Docker build no-cache
+		FromRegistry string   // Docker build from default registry
 	}
 
 	// Plugin defines the Docker plugin parameters.
@@ -253,6 +254,12 @@ func commandBuild(build Build) *exec.Cmd {
 		for _, label := range build.Labels {
 			args = append(args, "--label", label)
 		}
+	}
+
+	//modified by zac, add function: use docker.io.i.fbank.com as default pull registry
+	if build.FromRegistry != "" {
+		DefaultDomain = build.FromRegistry
+		ModifyDockerfile(build.Dockerfile)
 	}
 
 	return exec.Command(dockerExe, args...)
