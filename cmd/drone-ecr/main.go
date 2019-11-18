@@ -12,6 +12,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ecr"
 )
@@ -21,12 +22,14 @@ const defaultRegion = "us-east-1"
 func main() {
 	var (
 		repo             = getenv("PLUGIN_REPO")
+		registry         = getenv("PLUGIN_REGISTRY")
 		region           = getenv("PLUGIN_REGION", "ECR_REGION", "AWS_REGION")
 		key              = getenv("PLUGIN_ACCESS_KEY", "ECR_ACCESS_KEY", "AWS_ACCESS_KEY_ID")
 		secret           = getenv("PLUGIN_SECRET_KEY", "ECR_SECRET_KEY", "AWS_SECRET_ACCESS_KEY")
 		create           = parseBoolOrDefault(false, getenv("PLUGIN_CREATE_REPOSITORY", "ECR_CREATE_REPOSITORY"))
 		lifecyclePolicy  = getenv("PLUGIN_LIFECYCLE_POLICY")
 		repositoryPolicy = getenv("PLUGIN_REPOSITORY_POLICY")
+		assumeRole       = getenv("PLUGIN_ASSUME_ROLE")
 	)
 
 	// set the region
@@ -42,13 +45,17 @@ func main() {
 	}
 
 	sess, err := session.NewSession(&aws.Config{Region: &region})
-
 	if err != nil {
 		log.Fatal(fmt.Sprintf("error creating aws session: %v", err))
 	}
 
-	svc := ecr.New(sess)
-	username, password, registry, err := getAuthInfo(svc)
+	svc := getECRClient(sess, assumeRole)
+	username, password, defaultRegistry, err := getAuthInfo(svc)
+
+	if registry == "" {
+		registry = defaultRegistry
+	}
+
 	if err != nil {
 		log.Fatal(fmt.Sprintf("error getting ECR auth: %v", err))
 	}
@@ -177,4 +184,13 @@ func getenv(key ...string) (s string) {
 		}
 	}
 	return
+}
+
+func getECRClient(sess *session.Session, role string) *ecr.ECR {
+	if role == "" {
+		return ecr.New(sess)
+	}
+	return ecr.New(sess, &aws.Config{
+		Credentials: stscreds.NewCredentials(sess, role),
+	})
 }

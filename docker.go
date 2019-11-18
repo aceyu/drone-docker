@@ -2,7 +2,6 @@ package docker
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"strings"
@@ -70,18 +69,7 @@ type (
 func (p Plugin) Exec() error {
 	// start the Docker daemon server
 	if !p.Daemon.Disabled {
-		cmd := commandDaemon(p.Daemon)
-		if p.Daemon.Debug {
-			cmd.Stdout = os.Stdout
-			cmd.Stderr = os.Stderr
-		} else {
-			cmd.Stdout = ioutil.Discard
-			cmd.Stderr = ioutil.Discard
-		}
-		go func() {
-			trace(cmd)
-			cmd.Run()
-		}()
+		p.startDaemon()
 	}
 
 	// poll the docker daemon until it is started. This ensures the daemon is
@@ -154,9 +142,6 @@ func (p Plugin) Exec() error {
 
 	return nil
 }
-
-const dockerExe = "/usr/local/bin/docker"
-const dockerdExe = "/usr/local/bin/dockerd"
 
 // helper function to create the docker login command.
 func commandLogin(login Login) *exec.Cmd {
